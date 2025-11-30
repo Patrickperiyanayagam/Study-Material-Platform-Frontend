@@ -13,13 +13,13 @@ function UploadTab() {
   
   const handleFileSelect = (files) => {
     const validFiles = Array.from(files).filter(file => {
-      const validTypes = ['.pdf', '.txt', '.docx', '.doc']
+      const validTypes = ['.pdf', '.txt', '.docx', '.doc', '.pptx', '.ppt']
       const extension = '.' + file.name.split('.').pop().toLowerCase()
       return validTypes.includes(extension) && file.size <= 50000000 // 50MB
     })
     
     if (validFiles.length !== files.length) {
-      setError('Some files were skipped. Only PDF, TXT, DOC, and DOCX files under 50MB are supported.')
+      setError('Some files were skipped. Only PDF, TXT, DOC, DOCX, PPT, and PPTX files under 50MB are supported.')
     }
     
     setSelectedFiles(validFiles)
@@ -105,7 +105,7 @@ function UploadTab() {
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Upload Documents</h2>
         <p className="text-gray-600">
           Upload your study materials to create a searchable knowledge base. 
-          Supported formats: PDF, TXT, DOC, DOCX (max 50MB each)
+          Supported formats: PDF, TXT, DOC, DOCX, PPT, PPTX (max 50MB each)
         </p>
       </div>
       
@@ -126,13 +126,13 @@ function UploadTab() {
             Drop files here or click to browse
           </h3>
           <p className="text-gray-500 mb-4">
-            Supports PDF, TXT, DOC, DOCX files up to 50MB
+            Supports PDF, TXT, DOC, DOCX, PPT, PPTX files up to 50MB
           </p>
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".pdf,.txt,.doc,.docx"
+            accept=".pdf,.txt,.doc,.docx,.ppt,.pptx"
             onChange={handleFileInput}
             className="hidden"
           />

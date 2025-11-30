@@ -18,22 +18,22 @@ The frontend follows a component-based architecture with centralized state manag
 │  │   Upload    │ │    Chat     │ │    Quiz     │ │ Notes  │ │
 │  │     Tab     │ │     Tab     │ │     Tab     │ │  Tab   │ │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └────────┘ │
-│  ┌─────────────┐ ┌─────────────┐                            │
-│  │ Flashcards  │ │   Config    │                            │
-│  │     Tab     │ │     Tab     │                            │
-│  └─────────────┘ └─────────────┘                            │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │
+│  │ Flashcards  │ │   Summary   │ │   Config    │            │
+│  │     Tab     │ │     Tab     │ │     Tab     │            │
+│  └─────────────┘ └─────────────┘ └─────────────┘            │
 ├─────────────────────────────────────────────────────────────┤
 │                    Service Layer                           │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │                    API Services                        │ │
-│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │ │
-│  │ │ Document    │ │    Chat     │ │      Config        │ │ │
-│  │ │    API      │ │    API      │ │       API          │ │ │
-│  │ └─────────────┘ └─────────────┘ └─────────────────────┘ │ │
-│  │ ┌─────────────┐ ┌─────────────┐                       │ │
-│  │ │    Quiz     │ │ Flashcard   │                       │ │
-│  │ │    API      │ │    API      │                       │ │
-│  │ └─────────────┘ └─────────────┘                       │ │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐ │ │
+│  │ │ Document    │ │    Chat     │ │    Quiz     │ │  Config  │ │ │
+│  │ │    API      │ │    API      │ │    API      │ │   API    │ │ │
+│  │ └─────────────┘ └─────────────┘ └─────────────┘ └──────────┘ │ │
+│  │ ┌─────────────┐ ┌─────────────┐                             │ │
+│  │ │ Flashcard   │ │  Summary    │                             │ │
+│  │ │    API      │ │    API      │                             │ │
+│  │ └─────────────┘ └─────────────┘                             │ │
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                  Utilities & Helpers                       │
@@ -88,7 +88,7 @@ const initialState = {
 #### Upload Tab (`src/components/tabs/UploadTab.jsx`)
 **Features:**
 - **Drag & Drop Interface**: Intuitive file upload
-- **File Validation**: PDF, TXT, DOC, DOCX up to 50MB
+- **File Validation**: PDF, TXT, DOC, DOCX, PPT, PPTX up to 50MB
 - **Real-time Feedback**: Upload progress and validation errors
 - **Document Management**: View uploaded documents and clear all
 
@@ -97,7 +97,7 @@ const initialState = {
 // File upload handler
 const handleFileSelect = (files) => {
   const validFiles = Array.from(files).filter(file => {
-    const validTypes = ['.pdf', '.txt', '.docx', '.doc']
+    const validTypes = ['.pdf', '.txt', '.docx', '.doc', '.pptx', '.ppt']
     const extension = '.' + file.name.split('.').pop().toLowerCase()
     return validTypes.includes(extension) && file.size <= 50000000
   })
@@ -116,8 +116,10 @@ const handleUpload = async () => {
 - **Conversational AI**: Interactive chat with document knowledge
 - **Session Management**: Persistent conversations across browser sessions
 - **Message History**: Full conversation tracking with timestamps
-- **Source Attribution**: Citations from uploaded documents
+- **Source Attribution**: Citations from uploaded documents with **bold** formatting
 - **Model Configuration**: Runtime AI model switching
+- **Markdown Rendering**: Clean, formatted responses with proper styling
+- **Enhanced Citations**: Source filenames displayed prominently for easy identification
 
 **Chat Architecture:**
 ```javascript
@@ -202,10 +204,57 @@ const nextCard = () => {
 }
 ```
 
+#### Summary Tab (`src/components/tabs/SummaryTab.jsx`)
+**Features:**
+- **Document Summarization**: Generate intelligent summaries from uploaded content
+- **Length Control**: Short, medium, and long summary options
+- **Type Variation**: Overview, key points, detailed analysis, bullet points
+- **Topic Filtering**: Focus on specific documents or topics
+- **Export Functionality**: Download summaries as text files
+- **Metadata Display**: Word count, reading time, confidence scores
+- **Markdown Rendering**: Clean, formatted display with proper headers and styling
+- **Professional Layout**: Well-structured responses with organized sections
+
+**Summary Generation:**
+```javascript
+// Summary configuration
+const generateSummary = async () => {
+  const result = await summaryAPI.generate({
+    length: summarySettings.length,
+    type: summarySettings.type,
+    topics: summarySettings.selectedTopics,
+    model_configuration: summaryModelConfig
+  })
+  setSummary(result)
+}
+
+// Topic selection
+const handleTopicToggle = (topic) => {
+  setSummarySettings(prev => ({
+    ...prev,
+    selectedTopics: prev.selectedTopics.includes(topic)
+      ? prev.selectedTopics.filter(t => t !== topic)
+      : [...prev.selectedTopics, topic]
+  }))
+}
+
+// Export functionality
+const exportSummary = () => {
+  const element = document.createElement('a')
+  const file = new Blob([summary.content], { type: 'text/plain' })
+  element.href = URL.createObjectURL(file)
+  element.download = `summary_${summary.type}_${Date.now()}.txt`
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+}
+```
+
 #### Config Tab (`src/components/tabs/ConfigTab.jsx`)
 **Features:**
 - **Multi-Provider Support**: Ollama, Groq, OpenRouter, Gemini, OpenAI
 - **Model Selection**: Dynamic model lists per provider
+- **Service-Specific Config**: Separate models for Chat, Quiz, Flashcard, Summary
 - **Parameter Tuning**: Temperature, max tokens, base URLs
 - **API Key Management**: Secure credential handling
 - **Real-time Updates**: Instant configuration application
@@ -393,6 +442,42 @@ const ErrorMessage = ({ error, onDismiss }) => {
   )
 }
 ```
+
+### Enhanced Response Formatting
+
+**React Markdown Integration:**
+The application now uses `react-markdown` to render properly formatted responses in both Chat and Summary tabs.
+
+**Key Features:**
+```javascript
+import ReactMarkdown from 'react-markdown'
+
+// Chat message rendering
+<div className="prose prose-gray max-w-none">
+  <ReactMarkdown>
+    {message.content}
+  </ReactMarkdown>
+</div>
+
+// Summary content rendering  
+<div className="prose prose-gray max-w-none">
+  <ReactMarkdown>
+    {summary?.content || 'Summary content would appear here...'}
+  </ReactMarkdown>
+</div>
+```
+
+**Styling Benefits:**
+- **Proper Headers**: ## and ### rendered with appropriate sizes and spacing
+- **Bold Text**: **Important terms** displayed with proper emphasis
+- **Bullet Points**: Clean list formatting with consistent spacing
+- **Source Citations**: Filenames displayed in **bold** for easy identification
+- **Professional Layout**: Clean, readable formatting with proper typography
+
+**Tailwind Prose Integration:**
+- Uses `prose prose-gray` classes for consistent typography
+- `max-w-none` allows full-width content display
+- Maintains consistent styling across all formatted responses
 
 ## 📱 User Experience Flow
 

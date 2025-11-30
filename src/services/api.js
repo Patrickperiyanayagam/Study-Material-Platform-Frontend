@@ -121,6 +121,31 @@ export const flashcardAPI = {
   getStatus: () => api.get('/flashcards/status'),
 }
 
+// Summary APIs
+export const summaryAPI = {
+  generate: (request) => {
+    const payload = {
+      length: request.length,
+      type: request.type,
+      topics: request.topics,
+    }
+    if (request.model_configuration) {
+      payload.model_configuration = {
+        provider: request.model_configuration.provider,
+        model_name: request.model_configuration.modelName,
+        temperature: request.model_configuration.temperature,
+        base_url: request.model_configuration.baseUrl,
+        max_tokens: request.model_configuration.maxTokens
+      }
+    }
+    return api.post('/summary/generate', payload)
+  },
+  
+  getTopics: () => api.get('/summary/topics'),
+  
+  getStatus: () => api.get('/summary/status'),
+}
+
 // Configuration APIs
 export const configAPI = {
   updateModels: (config) => api.post('/config/models', config),

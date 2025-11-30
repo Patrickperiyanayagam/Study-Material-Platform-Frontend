@@ -5,6 +5,7 @@ import UploadTab from './tabs/UploadTab'
 import ChatTab from './tabs/ChatTab'
 import QuizTab from './tabs/QuizTab'
 import FlashcardsTab from './tabs/FlashcardsTab'
+import SummaryTab from './tabs/SummaryTab'
 import ConfigTab from './tabs/ConfigTab'
 import NotesTab from './tabs/NotesTab'
 import LoadingSpinner from './common/LoadingSpinner'
@@ -15,6 +16,7 @@ const tabs = [
   { id: 'chat', name: 'Chat', component: ChatTab },
   { id: 'quiz', name: 'Quiz', component: QuizTab },
   { id: 'flashcards', name: 'Flashcards', component: FlashcardsTab },
+  { id: 'summary', name: 'Summary', component: SummaryTab },
   { id: 'config', name: 'Model Config', component: ConfigTab },
   { id: 'notes', name: 'Notes', component: NotesTab },
 ]
