@@ -1,6 +1,9 @@
 import React, { useState } from 'react'
-import { Plus, Edit, Trash2, StickyNote } from 'lucide-react'
+import { Plus, Edit, Trash2, StickyNote, Download } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
+import DeleteConfirmModal from '../common/DeleteConfirmModal'
+import ExportModal from '../common/ExportModal'
+import { exportNote } from '../../utils/exportUtils'
 
 function NotesTab() {
   const { state, addNote, updateNote, deleteNote } = useApp()
@@ -8,6 +11,9 @@ function NotesTab() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingNote, setEditingNote] = useState(null)
   const [noteForm, setNoteForm] = useState({ title: '', content: '' })
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, note: null })
+  const [exportModal, setExportModal] = useState({ isOpen: false, note: null })
+  const [isDeleting, setIsDeleting] = useState(false)
   
   const handleOpenModal = (note = null) => {
     if (note) {
@@ -49,10 +55,33 @@ function NotesTab() {
     handleCloseModal()
   }
   
-  const handleDeleteNote = (noteId) => {
-    if (window.confirm('Are you sure you want to delete this note?')) {
-      deleteNote(noteId)
+  const handleDeleteNote = (note) => {
+    setDeleteModal({ isOpen: true, note })
+  }
+  
+  const confirmDelete = async () => {
+    if (!deleteModal.note) return
+    
+    setIsDeleting(true)
+    try {
+      deleteNote(deleteModal.note.id)
+      setDeleteModal({ isOpen: false, note: null })
+    } catch (error) {
+      console.error('Failed to delete note:', error)
+    } finally {
+      setIsDeleting(false)
     }
+  }
+  
+  const handleExportNote = (note) => {
+    setExportModal({ isOpen: true, note })
+  }
+  
+  const handleExport = async (format, filename) => {
+    if (!exportModal.note) return
+    
+    await exportNote(exportModal.note, format, filename)
+    setExportModal({ isOpen: false, note: null })
   }
   
   const formatDate = (dateString) => {
@@ -113,14 +142,23 @@ function NotesTab() {
                   </h3>
                   <div className="flex items-center space-x-1 ml-2">
                     <button
+                      onClick={() => handleExportNote(note)}
+                      className="p-1 text-gray-400 hover:text-blue-600"
+                      title="Export note"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => handleOpenModal(note)}
                       className="p-1 text-gray-400 hover:text-gray-600"
+                      title="Edit note"
                     >
                       <Edit className="h-4 w-4" />
                     </button>
                     <button
-                      onClick={() => handleDeleteNote(note.id)}
+                      onClick={() => handleDeleteNote(note)}
                       className="p-1 text-gray-400 hover:text-red-600"
+                      title="Delete note"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -185,8 +223,9 @@ function NotesTab() {
                   value={noteForm.content}
                   onChange={(e) => setNoteForm(prev => ({ ...prev, content: e.target.value }))}
                   placeholder="Enter your notes here..."
-                  rows={10}
-                  className="input w-full resize-none"
+                  rows={12}
+                  className="input w-full resize-none text-sm leading-relaxed"
+                  style={{ minHeight: '300px' }}
                 />
               </div>
             </div>
@@ -209,6 +248,25 @@ function NotesTab() {
           </div>
         </div>
       )}
+      
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, note: null })}
+        onConfirm={confirmDelete}
+        title="Delete Note"
+        itemName={deleteModal.note?.title}
+        itemDetails={deleteModal.note?.content}
+        isDeleting={isDeleting}
+      />
+      
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={exportModal.isOpen}
+        onClose={() => setExportModal({ isOpen: false, note: null })}
+        onExport={handleExport}
+        title="Export Note"
+      />
     </div>
   )
 }

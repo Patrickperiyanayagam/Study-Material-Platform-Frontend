@@ -151,6 +151,8 @@ const loadChatSessions = () => {
 - **Customizable Settings**: Number of questions, difficulty levels
 - **Real-time Scoring**: Instant feedback and explanations
 - **Progress Tracking**: Visual progress indicators
+- **Export Results**: Download quiz results in multiple formats (PDF, Word, TXT, JSON)
+- **Detailed Review**: Complete answer analysis with correct/incorrect indicators
 
 **Quiz Flow:**
 ```javascript
@@ -182,6 +184,8 @@ const handleAnswerSelect = (questionIndex, selectedOption) => {
 - **Smart Navigation**: Previous/next with keyboard support
 - **Progress Indicators**: Visual progress bar
 - **Customization**: Number of cards and topic selection
+- **Export Collection**: Download flashcard sets in multiple formats (PDF, Word, TXT, JSON)
+- **Card Metadata**: Topic and difficulty information for each card
 
 **Flashcard Logic:**
 ```javascript
@@ -210,7 +214,7 @@ const nextCard = () => {
 - **Length Control**: Short, medium, and long summary options
 - **Type Variation**: Overview, key points, detailed analysis, bullet points
 - **Topic Filtering**: Focus on specific documents or topics
-- **Export Functionality**: Download summaries as text files
+- **Export Functionality**: Download summaries in multiple formats (PDF, Word, TXT, JSON)
 - **Metadata Display**: Word count, reading time, confidence scores
 - **Markdown Rendering**: Clean, formatted display with proper headers and styling
 - **Professional Layout**: Well-structured responses with organized sections
@@ -279,10 +283,12 @@ const saveConfiguration = async () => {
 
 #### Notes Tab (`src/components/tabs/NotesTab.jsx`)
 **Features:**
-- **Personal Note-Taking**: Markdown-supported notes
+- **Enhanced Note-Taking**: Large content area with improved UI for extensive note writing
 - **Local Persistence**: Browser localStorage storage
-- **Search Functionality**: Find notes quickly
-- **Organization**: Categorization and tagging
+- **Export Individual Notes**: Download specific notes in multiple formats (PDF, Word, TXT, JSON)
+- **Safe Deletion**: Custom confirmation modal with note preview before deletion
+- **Improved UX**: Larger textarea (300px min-height) for better writing experience
+- **Action Icons**: Download, edit, and delete actions for each note with tooltips
 
 ### 3. Session Management System
 
@@ -374,6 +380,74 @@ export const configAPI = {
   status: () => api.get('/api/config/status')
 }
 ```
+
+### 5. Export System
+
+**Location**: `src/utils/exportUtils.js`
+
+**Universal Export Functionality:**
+The application features a comprehensive export system that allows users to download content in multiple formats across all major features.
+
+**Supported Export Formats:**
+```javascript
+// Export formats supported
+const formats = {
+  PDF: 'Styled document with print functionality',
+  DOCX: 'Microsoft Word compatible HTML format', 
+  TXT: 'Clean plain text format',
+  JSON: 'Structured data for programmatic use'
+}
+
+// Export functions
+export const exportSummary = async (summaryData, format, filename)
+export const exportQuiz = async (quizData, userAnswers, format, filename)
+export const exportFlashcards = async (flashcardData, format, filename)
+export const exportNote = async (noteData, format, filename)
+```
+
+**Export Modal Component:**
+```javascript
+// Reusable export modal with format selection
+<ExportModal
+  isOpen={showExportModal}
+  onClose={() => setShowExportModal(false)}
+  onExport={handleExport}
+  title="Export Content"
+/>
+
+// Format selection with icons and descriptions
+const formatOptions = [
+  { value: 'pdf', label: 'PDF Document', icon: FileText },
+  { value: 'docx', label: 'Word Document', icon: FileText },
+  { value: 'txt', label: 'Plain Text', icon: File },
+  { value: 'json', label: 'JSON Data', icon: Code }
+]
+```
+
+**Content-Specific Export Features:**
+
+**Quiz Export:**
+- Complete quiz results with score and statistics
+- Question-by-question review with correct/incorrect indicators
+- User answers vs. correct answers comparison
+- Explanations included when available
+
+**Summary Export:**
+- Summary content with full metadata
+- Configuration settings (type, length, topics)
+- Reading time and confidence scores
+- Markdown formatting preserved in PDF/Word
+
+**Flashcard Export:**
+- Complete card collections with front/back content
+- Topic and difficulty metadata for each card
+- Organized format for easy review and printing
+
+**Notes Export:**
+- Individual note export with title and content
+- Creation and modification timestamps
+- Markdown formatting support
+- Custom filename selection
 
 ## 🎨 UI/UX Features
 

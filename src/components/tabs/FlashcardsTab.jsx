@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
-import { Zap, RotateCcw, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Zap, RotateCcw, ArrowLeft, ArrowRight, Download } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { flashcardAPI } from '../../services/api'
 import LoadingSpinner from '../common/LoadingSpinner'
+import ExportModal from '../common/ExportModal'
+import { exportFlashcards } from '../../utils/exportUtils'
 
 function FlashcardsTab() {
   const { state, setLoading, setError, clearError, setTab } = useApp()
@@ -11,6 +13,7 @@ function FlashcardsTab() {
   const [currentCard, setCurrentCard] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [numCards, setNumCards] = useState(10)
+  const [showExportModal, setShowExportModal] = useState(false)
   
   const generateFlashcards = async () => {
     try {
@@ -52,6 +55,13 @@ function FlashcardsTab() {
     setFlashcards(null)
     setCurrentCard(0)
     setFlipped(false)
+    setShowExportModal(false)
+  }
+  
+  const handleExport = async (format, filename) => {
+    if (!flashcards) return
+    
+    await exportFlashcards(flashcards, format, filename)
   }
   
   if (documents.length === 0) {
@@ -137,12 +147,23 @@ function FlashcardsTab() {
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-bold text-gray-900">Flashcards</h2>
-          <button
-            onClick={resetFlashcards}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <RotateCcw className="h-5 w-5" />
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="btn btn-secondary px-3 py-2 text-sm flex items-center"
+              title="Export flashcards"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </button>
+            <button
+              onClick={resetFlashcards}
+              className="text-gray-500 hover:text-gray-700"
+              title="Create new flashcards"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </button>
+          </div>
         </div>
         <div className="flex items-center text-sm text-gray-600">
           <span>Card {currentCard + 1} of {flashcards.cards.length}</span>
@@ -227,6 +248,14 @@ function FlashcardsTab() {
           )}
         </div>
       )}
+      
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        title="Export Flashcards"
+      />
     </div>
   )
 }

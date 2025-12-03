@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
-import { Brain, CheckCircle, XCircle, RotateCcw } from 'lucide-react'
+import { Brain, CheckCircle, XCircle, RotateCcw, Download } from 'lucide-react'
 import { useApp } from '../../contexts/AppContext'
 import { quizAPI } from '../../services/api'
 import LoadingSpinner from '../common/LoadingSpinner'
+import ExportModal from '../common/ExportModal'
+import { exportQuiz } from '../../utils/exportUtils'
 
 function QuizTab() {
   const { state, setLoading, setError, clearError, setTab } = useApp()
@@ -15,6 +17,7 @@ function QuizTab() {
     numQuestions: 10,
     difficulty: 'medium'
   })
+  const [showExportModal, setShowExportModal] = useState(false)
   
   const generateQuiz = async () => {
     try {
@@ -65,6 +68,11 @@ function QuizTab() {
     setCurrentQuestion(0)
     setUserAnswers({})
     setShowResults(false)
+  }
+
+  const handleExport = async (format, filename) => {
+    if (!quiz || !showResults) return
+    await exportQuiz(quiz, userAnswers, format, filename)
   }
   
   if (documents.length === 0) {
@@ -189,6 +197,13 @@ function QuizTab() {
               <RotateCcw className="inline h-4 w-4 mr-2" />
               Generate New Quiz
             </button>
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="btn btn-secondary px-6 py-2"
+            >
+              <Download className="inline h-4 w-4 mr-2" />
+              Export Results
+            </button>
           </div>
         </div>
 
@@ -280,6 +295,14 @@ function QuizTab() {
             )
           })}
         </div>
+        
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={handleExport}
+          title="Export Quiz Results"
+        />
       </div>
     )
   }
@@ -381,6 +404,14 @@ function QuizTab() {
           </div>
         )}
       </div>
+      
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        title="Export Quiz Results"
+      />
     </div>
   )
 }

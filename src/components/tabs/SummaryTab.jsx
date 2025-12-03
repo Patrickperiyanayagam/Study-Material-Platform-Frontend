@@ -4,6 +4,8 @@ import ReactMarkdown from 'react-markdown'
 import { useApp } from '../../contexts/AppContext'
 import { summaryAPI } from '../../services/api'
 import LoadingSpinner from '../common/LoadingSpinner'
+import ExportModal from '../common/ExportModal'
+import { exportSummary } from '../../utils/exportUtils'
 
 function SummaryTab() {
   const { state, setLoading, setError, clearError, setTab } = useApp()
@@ -15,6 +17,7 @@ function SummaryTab() {
     type: 'overview',
     selectedTopics: []
   })
+  const [showExportModal, setShowExportModal] = useState(false)
 
   // Load available topics when component mounts
   useEffect(() => {
@@ -76,16 +79,16 @@ function SummaryTab() {
     })
   }
 
-  const exportSummary = () => {
+  const handleExport = async (format, filename) => {
     if (!summary) return
     
-    const element = document.createElement('a')
-    const file = new Blob([summary.content], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `summary_${summarySettings.type}_${Date.now()}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    const exportData = {
+      content: summary.content,
+      metadata: summary.metadata || {},
+      settings: summarySettings
+    }
+    
+    await exportSummary(exportData, format, filename)
   }
 
   if (documents.length === 0) {
@@ -225,7 +228,7 @@ function SummaryTab() {
           </div>
           <div className="flex space-x-3">
             <button
-              onClick={exportSummary}
+              onClick={() => setShowExportModal(true)}
               className="btn btn-secondary px-4 py-2 flex items-center"
             >
               <Download className="h-4 w-4 mr-2" />
@@ -269,6 +272,14 @@ function SummaryTab() {
           </div>
         )}
       </div>
+      
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onExport={handleExport}
+        title="Export Summary"
+      />
     </div>
   )
 }
