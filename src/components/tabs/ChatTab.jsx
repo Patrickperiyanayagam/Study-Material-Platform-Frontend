@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Send, MessageCircle, History, Trash2, Bot, User } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
 import { useApp } from '../../contexts/AppContext'
 import { chatAPI } from '../../services/api'
 import LoadingSpinner from '../common/LoadingSpinner'
@@ -239,8 +240,10 @@ function ChatTab() {
             )}
           </div>
           
-          <div className="text-gray-800 whitespace-pre-wrap leading-relaxed">
-            {message.content}
+          <div className="text-gray-800 leading-relaxed prose prose-gray max-w-none">
+            <ReactMarkdown>
+              {message.content}
+            </ReactMarkdown>
           </div>
           
           {/* Sources */}

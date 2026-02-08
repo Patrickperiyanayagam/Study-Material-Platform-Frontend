@@ -18,22 +18,22 @@ The frontend follows a component-based architecture with centralized state manag
 │  │   Upload    │ │    Chat     │ │    Quiz     │ │ Notes  │ │
 │  │     Tab     │ │     Tab     │ │     Tab     │ │  Tab   │ │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └────────┘ │
-│  ┌─────────────┐ ┌─────────────┐                            │
-│  │ Flashcards  │ │   Config    │                            │
-│  │     Tab     │ │     Tab     │                            │
-│  └─────────────┘ └─────────────┘                            │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌────────┐ │
+│  │ Flashcards  │ │   Summary   │ │    Test     │ │ Config │ │
+│  │     Tab     │ │     Tab     │ │     Tab     │ │  Tab   │ │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                    Service Layer                           │
 │  ┌─────────────────────────────────────────────────────────┐ │
 │  │                    API Services                        │ │
-│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────────────┐ │ │
-│  │ │ Document    │ │    Chat     │ │      Config        │ │ │
-│  │ │    API      │ │    API      │ │       API          │ │ │
-│  │ └─────────────┘ └─────────────┘ └─────────────────────┘ │ │
-│  │ ┌─────────────┐ ┌─────────────┐                       │ │
-│  │ │    Quiz     │ │ Flashcard   │                       │ │
-│  │ │    API      │ │    API      │                       │ │
-│  │ └─────────────┘ └─────────────┘                       │ │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌──────────┐ │ │
+│  │ │ Document    │ │    Chat     │ │    Quiz     │ │  Config  │ │ │
+│  │ │    API      │ │    API      │ │    API      │ │   API    │ │ │
+│  │ └─────────────┘ └─────────────┘ └─────────────┘ └──────────┘ │ │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │ │
+│  │ │ Flashcard   │ │  Summary    │ │    Test     │             │ │
+│  │ │    API      │ │    API      │ │    API      │             │ │
+│  │ └─────────────┘ └─────────────┘ └─────────────┘             │ │
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                  Utilities & Helpers                       │
@@ -65,6 +65,8 @@ const initialState = {
   chatModelConfig: {},
   quizModelConfig: {},
   flashcardModelConfig: {},
+  summaryModelConfig: {},
+  testModelConfig: {},
   
   // Chat Management
   chatSessions: {},
@@ -88,7 +90,7 @@ const initialState = {
 #### Upload Tab (`src/components/tabs/UploadTab.jsx`)
 **Features:**
 - **Drag & Drop Interface**: Intuitive file upload
-- **File Validation**: PDF, TXT, DOC, DOCX up to 50MB
+- **File Validation**: PDF, TXT, DOC, DOCX, PPT, PPTX up to 50MB
 - **Real-time Feedback**: Upload progress and validation errors
 - **Document Management**: View uploaded documents and clear all
 
@@ -97,7 +99,7 @@ const initialState = {
 // File upload handler
 const handleFileSelect = (files) => {
   const validFiles = Array.from(files).filter(file => {
-    const validTypes = ['.pdf', '.txt', '.docx', '.doc']
+    const validTypes = ['.pdf', '.txt', '.docx', '.doc', '.pptx', '.ppt']
     const extension = '.' + file.name.split('.').pop().toLowerCase()
     return validTypes.includes(extension) && file.size <= 50000000
   })
@@ -116,8 +118,10 @@ const handleUpload = async () => {
 - **Conversational AI**: Interactive chat with document knowledge
 - **Session Management**: Persistent conversations across browser sessions
 - **Message History**: Full conversation tracking with timestamps
-- **Source Attribution**: Citations from uploaded documents
+- **Source Attribution**: Citations from uploaded documents with **bold** formatting
 - **Model Configuration**: Runtime AI model switching
+- **Markdown Rendering**: Clean, formatted responses with proper styling
+- **Enhanced Citations**: Source filenames displayed prominently for easy identification
 
 **Chat Architecture:**
 ```javascript
@@ -149,6 +153,8 @@ const loadChatSessions = () => {
 - **Customizable Settings**: Number of questions, difficulty levels
 - **Real-time Scoring**: Instant feedback and explanations
 - **Progress Tracking**: Visual progress indicators
+- **Export Results**: Download quiz results in multiple formats (PDF, Word, TXT, JSON)
+- **Detailed Review**: Complete answer analysis with correct/incorrect indicators
 
 **Quiz Flow:**
 ```javascript
@@ -180,6 +186,8 @@ const handleAnswerSelect = (questionIndex, selectedOption) => {
 - **Smart Navigation**: Previous/next with keyboard support
 - **Progress Indicators**: Visual progress bar
 - **Customization**: Number of cards and topic selection
+- **Export Collection**: Download flashcard sets in multiple formats (PDF, Word, TXT, JSON)
+- **Card Metadata**: Topic and difficulty information for each card
 
 **Flashcard Logic:**
 ```javascript
@@ -202,10 +210,131 @@ const nextCard = () => {
 }
 ```
 
+#### Summary Tab (`src/components/tabs/SummaryTab.jsx`)
+**Features:**
+- **Document Summarization**: Generate intelligent summaries from uploaded content
+- **Length Control**: Short, medium, and long summary options
+- **Type Variation**: Overview, key points, detailed analysis, bullet points
+- **Topic Filtering**: Focus on specific documents or topics
+- **Export Functionality**: Download summaries in multiple formats (PDF, Word, TXT, JSON)
+- **Metadata Display**: Word count, reading time, confidence scores
+- **Markdown Rendering**: Clean, formatted display with proper headers and styling
+- **Professional Layout**: Well-structured responses with organized sections
+
+**Summary Generation:**
+```javascript
+// Summary configuration
+const generateSummary = async () => {
+  const result = await summaryAPI.generate({
+    length: summarySettings.length,
+    type: summarySettings.type,
+    topics: summarySettings.selectedTopics,
+    model_configuration: summaryModelConfig
+  })
+  setSummary(result)
+}
+
+// Topic selection
+const handleTopicToggle = (topic) => {
+  setSummarySettings(prev => ({
+    ...prev,
+    selectedTopics: prev.selectedTopics.includes(topic)
+      ? prev.selectedTopics.filter(t => t !== topic)
+      : [...prev.selectedTopics, topic]
+  }))
+}
+
+// Export functionality
+const exportSummary = () => {
+  const element = document.createElement('a')
+  const file = new Blob([summary.content], { type: 'text/plain' })
+  element.href = URL.createObjectURL(file)
+  element.download = `summary_${summary.type}_${Date.now()}.txt`
+  document.body.appendChild(element)
+  element.click()
+  document.body.removeChild(element)
+}
+```
+
+#### Test Tab (`src/components/tabs/TestTab.jsx`)
+**Features:**
+- **Auto-Exam Generation**: Generate syllabus-aligned tests from uploaded documents
+- **Configurable Test Parameters**: Difficulty levels (easy, medium, hard), question count, mark distribution (2/4/8 marks)
+- **AI-Powered Grading**: Intelligent evaluation with detailed feedback for each answer
+- **Comprehensive Results**: Question-by-question marks, percentages, strengths, and improvement areas
+- **Study Plan Generation**: Personalized recommendations based on performance and weak topics
+- **Export Functionality**: Download test results in multiple formats (PDF, Word, TXT, JSON)
+- **Interactive Test Interface**: Clean UI for taking tests with textarea inputs for essay questions
+
+**Test Generation:**
+```javascript
+// Test configuration
+const generateTest = async () => {
+  const result = await testAPI.generate(
+    testSettings.numQuestions,
+    testSettings.difficulty,
+    testSettings.markDistribution,
+    null, // topics - can be added later
+    testModelConfig
+  )
+  setTest(result)
+}
+
+// Mark distribution configuration
+const handleMarkDistributionChange = (marks, count) => {
+  setTestSettings(prev => ({
+    ...prev,
+    markDistribution: {
+      ...prev.markDistribution,
+      [marks]: Math.max(0, count)
+    }
+  }))
+}
+```
+
+**AI Grading System:**
+```javascript
+// Submit test for AI grading
+const submitTest = async () => {
+  const formattedAnswers = Object.entries(userAnswers).map(([questionIndex, answer]) => ({
+    question_index: parseInt(questionIndex),
+    answer: answer
+  }))
+  
+  const result = await testAPI.grade(
+    test.questions,
+    formattedAnswers,
+    testModelConfig
+  )
+  
+  setGradingResults(result)
+  setShowResultsModal(true)
+}
+
+// Export test results
+const handleExport = async (format, filename) => {
+  await exportTestResults(gradingResults, format, filename)
+}
+```
+
+**Test Configuration Options:**
+- **Difficulty Levels**: Easy, Medium, Hard
+- **Mark Distribution**: Customizable 2-mark (basic), 4-mark (application), 8-mark (evaluation) questions
+- **Question Count**: Automatically calculated from mark distribution
+- **Topic Selection**: Optional filtering by document topics
+
+**Grading Features:**
+- **Rubric-based Evaluation**: 40% accuracy, 30% depth, 20% examples, 10% clarity
+- **Detailed Feedback**: Specific comments on content quality and understanding
+- **Performance Analysis**: Strengths identification and improvement suggestions
+- **Study Plan**: Targeted recommendations for weak areas
+- **Topic-based Assessment**: Identifies subjects needing more attention
+
 #### Config Tab (`src/components/tabs/ConfigTab.jsx`)
 **Features:**
 - **Multi-Provider Support**: Ollama, Groq, OpenRouter, Gemini, OpenAI
 - **Model Selection**: Dynamic model lists per provider
+- **Service-Specific Config**: Separate models for Chat, Quiz, Flashcard, Summary, Test
 - **Parameter Tuning**: Temperature, max tokens, base URLs
 - **API Key Management**: Secure credential handling
 - **Real-time Updates**: Instant configuration application
@@ -230,10 +359,12 @@ const saveConfiguration = async () => {
 
 #### Notes Tab (`src/components/tabs/NotesTab.jsx`)
 **Features:**
-- **Personal Note-Taking**: Markdown-supported notes
+- **Enhanced Note-Taking**: Large content area with improved UI for extensive note writing
 - **Local Persistence**: Browser localStorage storage
-- **Search Functionality**: Find notes quickly
-- **Organization**: Categorization and tagging
+- **Export Individual Notes**: Download specific notes in multiple formats (PDF, Word, TXT, JSON)
+- **Safe Deletion**: Custom confirmation modal with note preview before deletion
+- **Improved UX**: Larger textarea (300px min-height) for better writing experience
+- **Action Icons**: Download, edit, and delete actions for each note with tooltips
 
 ### 3. Session Management System
 
@@ -317,6 +448,32 @@ export const flashcardAPI = {
   status: () => api.get('/api/flashcards/status')
 }
 
+// Summary API
+export const summaryAPI = {
+  generate: (data) => api.post('/api/summary/generate', data),
+  status: () => api.get('/api/summary/status')
+}
+
+// Test API
+export const testAPI = {
+  generate: (numQuestions, difficulty, markDistribution, topics, modelConfig) => 
+    api.post('/api/test/generate', {
+      num_questions: numQuestions,
+      difficulty,
+      mark_distribution: markDistribution,
+      topics,
+      model_configuration: modelConfig
+    }),
+  grade: (questions, answers, modelConfig) => 
+    api.post('/api/test/grade', {
+      questions,
+      answers,
+      model_configuration: modelConfig
+    }),
+  getTopics: () => api.get('/api/test/topics'),
+  status: () => api.get('/api/test/status')
+}
+
 // Configuration API
 export const configAPI = {
   updateModelConfig: (config) => api.post('/api/config/models', config),
@@ -325,6 +482,83 @@ export const configAPI = {
   status: () => api.get('/api/config/status')
 }
 ```
+
+### 5. Export System
+
+**Location**: `src/utils/exportUtils.js`
+
+**Universal Export Functionality:**
+The application features a comprehensive export system that allows users to download content in multiple formats across all major features.
+
+**Supported Export Formats:**
+```javascript
+// Export formats supported
+const formats = {
+  PDF: 'Styled document with print functionality',
+  DOCX: 'Microsoft Word compatible HTML format', 
+  TXT: 'Clean plain text format',
+  JSON: 'Structured data for programmatic use'
+}
+
+// Export functions
+export const exportSummary = async (summaryData, format, filename)
+export const exportQuiz = async (quizData, userAnswers, format, filename)
+export const exportFlashcards = async (flashcardData, format, filename)
+export const exportNote = async (noteData, format, filename)
+export const exportTestResults = async (gradingResults, format, filename)
+```
+
+**Export Modal Component:**
+```javascript
+// Reusable export modal with format selection
+<ExportModal
+  isOpen={showExportModal}
+  onClose={() => setShowExportModal(false)}
+  onExport={handleExport}
+  title="Export Content"
+/>
+
+// Format selection with icons and descriptions
+const formatOptions = [
+  { value: 'pdf', label: 'PDF Document', icon: FileText },
+  { value: 'docx', label: 'Word Document', icon: FileText },
+  { value: 'txt', label: 'Plain Text', icon: File },
+  { value: 'json', label: 'JSON Data', icon: Code }
+]
+```
+
+**Content-Specific Export Features:**
+
+**Quiz Export:**
+- Complete quiz results with score and statistics
+- Question-by-question review with correct/incorrect indicators
+- User answers vs. correct answers comparison
+- Explanations included when available
+
+**Summary Export:**
+- Summary content with full metadata
+- Configuration settings (type, length, topics)
+- Reading time and confidence scores
+- Markdown formatting preserved in PDF/Word
+
+**Flashcard Export:**
+- Complete card collections with front/back content
+- Topic and difficulty metadata for each card
+- Organized format for easy review and printing
+
+**Notes Export:**
+- Individual note export with title and content
+- Creation and modification timestamps
+- Markdown formatting support
+- Custom filename selection
+
+**Test Results Export:**
+- Comprehensive test performance reports
+- Overall score summary with percentage and marks
+- Question-by-question detailed breakdown
+- Feedback and improvement suggestions for each answer
+- Study plan recommendations based on weak topics
+- Professional formatting with color-coded performance indicators
 
 ## 🎨 UI/UX Features
 
@@ -394,6 +628,42 @@ const ErrorMessage = ({ error, onDismiss }) => {
 }
 ```
 
+### Enhanced Response Formatting
+
+**React Markdown Integration:**
+The application now uses `react-markdown` to render properly formatted responses in both Chat and Summary tabs.
+
+**Key Features:**
+```javascript
+import ReactMarkdown from 'react-markdown'
+
+// Chat message rendering
+<div className="prose prose-gray max-w-none">
+  <ReactMarkdown>
+    {message.content}
+  </ReactMarkdown>
+</div>
+
+// Summary content rendering  
+<div className="prose prose-gray max-w-none">
+  <ReactMarkdown>
+    {summary?.content || 'Summary content would appear here...'}
+  </ReactMarkdown>
+</div>
+```
+
+**Styling Benefits:**
+- **Proper Headers**: ## and ### rendered with appropriate sizes and spacing
+- **Bold Text**: **Important terms** displayed with proper emphasis
+- **Bullet Points**: Clean list formatting with consistent spacing
+- **Source Citations**: Filenames displayed in **bold** for easy identification
+- **Professional Layout**: Clean, readable formatting with proper typography
+
+**Tailwind Prose Integration:**
+- Uses `prose prose-gray` classes for consistent typography
+- `max-w-none` allows full-width content display
+- Maintains consistent styling across all formatted responses
+
 ## 📱 User Experience Flow
 
 ### Complete User Journey
@@ -420,6 +690,13 @@ const ErrorMessage = ({ error, onDismiss }) => {
    ```
    Flashcard Tab → Generation → Card Display → 
    Flip Animation → Navigation → Progress Tracking
+   ```
+
+5. **Test Generation & Grading**
+   ```
+   Test Tab → Configuration Setup → Test Generation → 
+   Question Display → Answer Submission → AI Grading → 
+   Results Display → Study Plan → Export Options
    ```
 
 ### State Persistence

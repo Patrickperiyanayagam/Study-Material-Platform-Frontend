@@ -121,6 +121,74 @@ export const flashcardAPI = {
   getStatus: () => api.get('/flashcards/status'),
 }
 
+// Summary APIs
+export const summaryAPI = {
+  generate: (request) => {
+    const payload = {
+      length: request.length,
+      type: request.type,
+      topics: request.topics,
+    }
+    if (request.model_configuration) {
+      payload.model_configuration = {
+        provider: request.model_configuration.provider,
+        model_name: request.model_configuration.modelName,
+        temperature: request.model_configuration.temperature,
+        base_url: request.model_configuration.baseUrl,
+        max_tokens: request.model_configuration.maxTokens
+      }
+    }
+    return api.post('/summary/generate', payload)
+  },
+  
+  getTopics: () => api.get('/summary/topics'),
+  
+  getStatus: () => api.get('/summary/status'),
+}
+
+// Test APIs
+export const testAPI = {
+  generate: (numQuestions = 10, difficulty = 'medium', markDistribution = null, topics = null, modelConfig = null) => {
+    const payload = {
+      num_questions: numQuestions,
+      difficulty,
+      mark_distribution: markDistribution,
+      topics,
+    }
+    if (modelConfig) {
+      payload.model_configuration = {
+        provider: modelConfig.provider,
+        model_name: modelConfig.modelName,
+        temperature: modelConfig.temperature,
+        base_url: modelConfig.baseUrl,
+        max_tokens: modelConfig.maxTokens
+      }
+    }
+    return api.post('/test/generate', payload)
+  },
+  
+  grade: (questions, answers, modelConfig = null) => {
+    const payload = {
+      questions,
+      answers,
+    }
+    if (modelConfig) {
+      payload.model_configuration = {
+        provider: modelConfig.provider,
+        model_name: modelConfig.modelName,
+        temperature: modelConfig.temperature,
+        base_url: modelConfig.baseUrl,
+        max_tokens: modelConfig.maxTokens
+      }
+    }
+    return api.post('/test/grade', payload)
+  },
+  
+  getTopics: () => api.get('/test/topics'),
+  
+  getStatus: () => api.get('/test/status'),
+}
+
 // Configuration APIs
 export const configAPI = {
   updateModels: (config) => api.post('/config/models', config),
