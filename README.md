@@ -18,10 +18,10 @@ The frontend follows a component-based architecture with centralized state manag
 │  │   Upload    │ │    Chat     │ │    Quiz     │ │ Notes  │ │
 │  │     Tab     │ │     Tab     │ │     Tab     │ │  Tab   │ │
 │  └─────────────┘ └─────────────┘ └─────────────┘ └────────┘ │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐            │
-│  │ Flashcards  │ │   Summary   │ │   Config    │            │
-│  │     Tab     │ │     Tab     │ │     Tab     │            │
-│  └─────────────┘ └─────────────┘ └─────────────┘            │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌────────┐ │
+│  │ Flashcards  │ │   Summary   │ │    Test     │ │ Config │ │
+│  │     Tab     │ │     Tab     │ │     Tab     │ │  Tab   │ │
+│  └─────────────┘ └─────────────┘ └─────────────┘ └────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                    Service Layer                           │
 │  ┌─────────────────────────────────────────────────────────┐ │
@@ -30,10 +30,10 @@ The frontend follows a component-based architecture with centralized state manag
 │  │ │ Document    │ │    Chat     │ │    Quiz     │ │  Config  │ │ │
 │  │ │    API      │ │    API      │ │    API      │ │   API    │ │ │
 │  │ └─────────────┘ └─────────────┘ └─────────────┘ └──────────┘ │ │
-│  │ ┌─────────────┐ ┌─────────────┐                             │ │
-│  │ │ Flashcard   │ │  Summary    │                             │ │
-│  │ │    API      │ │    API      │                             │ │
-│  │ └─────────────┘ └─────────────┘                             │ │
+│  │ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │ │
+│  │ │ Flashcard   │ │  Summary    │ │    Test     │             │ │
+│  │ │    API      │ │    API      │ │    API      │             │ │
+│  │ └─────────────┘ └─────────────┘ └─────────────┘             │ │
 │  └─────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────┤
 │                  Utilities & Helpers                       │
@@ -65,6 +65,8 @@ const initialState = {
   chatModelConfig: {},
   quizModelConfig: {},
   flashcardModelConfig: {},
+  summaryModelConfig: {},
+  testModelConfig: {},
   
   // Chat Management
   chatSessions: {},
@@ -254,11 +256,85 @@ const exportSummary = () => {
 }
 ```
 
+#### Test Tab (`src/components/tabs/TestTab.jsx`)
+**Features:**
+- **Auto-Exam Generation**: Generate syllabus-aligned tests from uploaded documents
+- **Configurable Test Parameters**: Difficulty levels (easy, medium, hard), question count, mark distribution (2/4/8 marks)
+- **AI-Powered Grading**: Intelligent evaluation with detailed feedback for each answer
+- **Comprehensive Results**: Question-by-question marks, percentages, strengths, and improvement areas
+- **Study Plan Generation**: Personalized recommendations based on performance and weak topics
+- **Export Functionality**: Download test results in multiple formats (PDF, Word, TXT, JSON)
+- **Interactive Test Interface**: Clean UI for taking tests with textarea inputs for essay questions
+
+**Test Generation:**
+```javascript
+// Test configuration
+const generateTest = async () => {
+  const result = await testAPI.generate(
+    testSettings.numQuestions,
+    testSettings.difficulty,
+    testSettings.markDistribution,
+    null, // topics - can be added later
+    testModelConfig
+  )
+  setTest(result)
+}
+
+// Mark distribution configuration
+const handleMarkDistributionChange = (marks, count) => {
+  setTestSettings(prev => ({
+    ...prev,
+    markDistribution: {
+      ...prev.markDistribution,
+      [marks]: Math.max(0, count)
+    }
+  }))
+}
+```
+
+**AI Grading System:**
+```javascript
+// Submit test for AI grading
+const submitTest = async () => {
+  const formattedAnswers = Object.entries(userAnswers).map(([questionIndex, answer]) => ({
+    question_index: parseInt(questionIndex),
+    answer: answer
+  }))
+  
+  const result = await testAPI.grade(
+    test.questions,
+    formattedAnswers,
+    testModelConfig
+  )
+  
+  setGradingResults(result)
+  setShowResultsModal(true)
+}
+
+// Export test results
+const handleExport = async (format, filename) => {
+  await exportTestResults(gradingResults, format, filename)
+}
+```
+
+**Test Configuration Options:**
+- **Difficulty Levels**: Easy, Medium, Hard
+- **Mark Distribution**: Customizable 2-mark (basic), 4-mark (application), 8-mark (evaluation) questions
+- **Question Count**: Automatically calculated from mark distribution
+- **Topic Selection**: Optional filtering by document topics
+
+**Grading Features:**
+- **Rubric-based Evaluation**: 40% accuracy, 30% depth, 20% examples, 10% clarity
+- **Detailed Feedback**: Specific comments on content quality and understanding
+- **Performance Analysis**: Strengths identification and improvement suggestions
+- **Study Plan**: Targeted recommendations for weak areas
+- **Topic-based Assessment**: Identifies subjects needing more attention
+
 #### Config Tab (`src/components/tabs/ConfigTab.jsx`)
 **Features:**
 - **Multi-Provider Support**: Ollama, Groq, OpenRouter, Gemini, OpenAI
 - **Model Selection**: Dynamic model lists per provider
-- **Service-Specific Config**: Separate models for Chat, Quiz, Flashcard, Summary
+- **Service-Specific Config**: Separate models for Chat, Quiz, Flashcard, Summary, Test
 - **Parameter Tuning**: Temperature, max tokens, base URLs
 - **API Key Management**: Secure credential handling
 - **Real-time Updates**: Instant configuration application
@@ -372,6 +448,32 @@ export const flashcardAPI = {
   status: () => api.get('/api/flashcards/status')
 }
 
+// Summary API
+export const summaryAPI = {
+  generate: (data) => api.post('/api/summary/generate', data),
+  status: () => api.get('/api/summary/status')
+}
+
+// Test API
+export const testAPI = {
+  generate: (numQuestions, difficulty, markDistribution, topics, modelConfig) => 
+    api.post('/api/test/generate', {
+      num_questions: numQuestions,
+      difficulty,
+      mark_distribution: markDistribution,
+      topics,
+      model_configuration: modelConfig
+    }),
+  grade: (questions, answers, modelConfig) => 
+    api.post('/api/test/grade', {
+      questions,
+      answers,
+      model_configuration: modelConfig
+    }),
+  getTopics: () => api.get('/api/test/topics'),
+  status: () => api.get('/api/test/status')
+}
+
 // Configuration API
 export const configAPI = {
   updateModelConfig: (config) => api.post('/api/config/models', config),
@@ -403,6 +505,7 @@ export const exportSummary = async (summaryData, format, filename)
 export const exportQuiz = async (quizData, userAnswers, format, filename)
 export const exportFlashcards = async (flashcardData, format, filename)
 export const exportNote = async (noteData, format, filename)
+export const exportTestResults = async (gradingResults, format, filename)
 ```
 
 **Export Modal Component:**
@@ -448,6 +551,14 @@ const formatOptions = [
 - Creation and modification timestamps
 - Markdown formatting support
 - Custom filename selection
+
+**Test Results Export:**
+- Comprehensive test performance reports
+- Overall score summary with percentage and marks
+- Question-by-question detailed breakdown
+- Feedback and improvement suggestions for each answer
+- Study plan recommendations based on weak topics
+- Professional formatting with color-coded performance indicators
 
 ## 🎨 UI/UX Features
 
@@ -579,6 +690,13 @@ import ReactMarkdown from 'react-markdown'
    ```
    Flashcard Tab → Generation → Card Display → 
    Flip Animation → Navigation → Progress Tracking
+   ```
+
+5. **Test Generation & Grading**
+   ```
+   Test Tab → Configuration Setup → Test Generation → 
+   Question Display → Answer Submission → AI Grading → 
+   Results Display → Study Plan → Export Options
    ```
 
 ### State Persistence

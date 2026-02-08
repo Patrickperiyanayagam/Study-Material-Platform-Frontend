@@ -31,6 +31,12 @@ const initialState = {
       modelName: 'llama3.1:8b',
       temperature: 0.7,
       baseUrl: 'http://localhost:11434'
+    },
+    testModel: {
+      provider: 'ollama',
+      modelName: 'llama3.1:8b',
+      temperature: 0.7,
+      baseUrl: 'http://localhost:11434'
     }
   },
   // Individual service model configs for per-request usage
@@ -53,6 +59,12 @@ const initialState = {
     baseUrl: 'http://localhost:11434'
   },
   summaryModelConfig: {
+    provider: 'ollama',
+    modelName: 'llama3.1:8b',
+    temperature: 0.7,
+    baseUrl: 'http://localhost:11434'
+  },
+  testModelConfig: {
     provider: 'ollama',
     modelName: 'llama3.1:8b',
     temperature: 0.7,
@@ -116,6 +128,12 @@ function appReducer(state, action) {
       return { 
         ...state, 
         summaryModelConfig: { ...state.summaryModelConfig, ...action.payload } 
+      }
+    
+    case 'UPDATE_TEST_MODEL_CONFIG':
+      return { 
+        ...state, 
+        testModelConfig: { ...state.testModelConfig, ...action.payload } 
       }
     
     case 'UPDATE_CHAT_SESSION':
@@ -190,6 +208,7 @@ export function AppProvider({ children }) {
     updateQuizModelConfig: (config) => dispatch({ type: 'UPDATE_QUIZ_MODEL_CONFIG', payload: config }),
     updateFlashcardModelConfig: (config) => dispatch({ type: 'UPDATE_FLASHCARD_MODEL_CONFIG', payload: config }),
     updateSummaryModelConfig: (config) => dispatch({ type: 'UPDATE_SUMMARY_MODEL_CONFIG', payload: config }),
+    updateTestModelConfig: (config) => dispatch({ type: 'UPDATE_TEST_MODEL_CONFIG', payload: config }),
     updateChatSession: (sessionId, messages) => 
       dispatch({ type: 'UPDATE_CHAT_SESSION', payload: { sessionId, messages } }),
     clearChatSession: (sessionId) => 

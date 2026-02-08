@@ -5,7 +5,7 @@ import { configAPI } from '../../services/api'
 import LoadingSpinner from '../common/LoadingSpinner'
 
 function ConfigTab() {
-  const { state, setLoading, setError, clearError, updateModelConfig, updateChatModelConfig, updateQuizModelConfig, updateFlashcardModelConfig, updateSummaryModelConfig } = useApp()
+  const { state, setLoading, setError, clearError, updateModelConfig, updateChatModelConfig, updateQuizModelConfig, updateFlashcardModelConfig, updateSummaryModelConfig, updateTestModelConfig } = useApp()
   const { modelConfig, isLoading } = state
   const [providers, setProviders] = useState([])
   const [localConfig, setLocalConfig] = useState(modelConfig)
@@ -68,6 +68,12 @@ function ConfigTab() {
           model_name: localConfig.summaryModel.modelName,
           temperature: localConfig.summaryModel.temperature,
           base_url: localConfig.summaryModel.baseUrl
+        },
+        test_model: {
+          provider: localConfig.testModel.provider,
+          model_name: localConfig.testModel.modelName,
+          temperature: localConfig.testModel.temperature,
+          base_url: localConfig.testModel.baseUrl
         }
       })
       
@@ -79,6 +85,7 @@ function ConfigTab() {
       updateQuizModelConfig(localConfig.quizModel)
       updateFlashcardModelConfig(localConfig.flashcardModel)
       updateSummaryModelConfig(localConfig.summaryModel)
+      updateTestModelConfig(localConfig.testModel)
       
       setHasChanges(false)
       
@@ -192,11 +199,12 @@ function ConfigTab() {
         </p>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6 mb-8">
         {renderModelConfig('Chat Model', 'chatModel', localConfig.chatModel)}
         {renderModelConfig('Quiz Model', 'quizModel', localConfig.quizModel)}
         {renderModelConfig('Flashcard Model', 'flashcardModel', localConfig.flashcardModel)}
         {renderModelConfig('Summary Model', 'summaryModel', localConfig.summaryModel)}
+        {renderModelConfig('Test Model', 'testModel', localConfig.testModel)}
       </div>
       
       {/* Save Changes */}

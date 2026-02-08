@@ -579,3 +579,79 @@ ${plainContent}
       throw new Error(`Unsupported format: ${format}`)
   }
 }
+
+// Export Test Results
+export const exportTestResults = async (gradingResults, format, filename) => {
+  const { grades = [], total_marks_awarded, total_marks_possible, overall_percentage, overall_feedback, weak_topics = [], study_plan = [] } = gradingResults
+  
+  const title = `Test Results Report`
+  const fullFilename = `${filename}.${format}`
+  
+  switch (format) {
+    case 'pdf': {
+      const resultsHtml = grades.map((grade, index) => `
+        <div class="question" style="margin-bottom: 30px;">
+          <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h3 style="margin: 0 0 10px 0; color: #0277bd;">Question ${index + 1}</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong>${grade.question}</strong>
+              <div style="text-align: right;">
+                <div style="font-size: 1.2em; font-weight: bold; color: #0277bd;">
+                  ${grade.marks_awarded.toFixed(1)} / ${grade.max_marks} marks
+                </div>
+                <div style="font-size: 0.9em; color: #666;">
+                  ${grade.percentage.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong>Your Answer:</strong>
+            <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; margin-top: 5px;">
+              ${grade.user_answer || 'No answer provided'}
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 15px;">
+            <strong>Feedback:</strong>
+            <div style="color: #555; margin-top: 5px;">${grade.feedback}</div>
+          </div>
+        </div>
+      `).join('')
+      
+      const fullHtml = createHTMLTemplate(title, `<h1 style="text-align: center;">${title}</h1>${resultsHtml}`)
+      
+      const printWindow = window.open('', '_blank')
+      printWindow.document.write(fullHtml)
+      printWindow.document.close()
+      printWindow.focus()
+      printWindow.print()
+      printWindow.close()
+      return
+    }
+    
+    case 'json': {
+      const jsonData = {
+        title,
+        overall_performance: {
+          percentage: overall_percentage,
+          marks_awarded: total_marks_awarded,
+          marks_possible: total_marks_possible,
+          feedback: overall_feedback
+        },
+        weak_topics,
+        study_plan,
+        detailed_results: grades,
+        exportedAt: new Date().toISOString()
+      }
+      
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' })
+      downloadBlob(blob, fullFilename)
+      return
+    }
+    
+    default:
+      throw new Error(`Unsupported format: ${format}`)
+  }
+}
